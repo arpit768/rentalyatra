@@ -1,0 +1,256 @@
+// Prisma Schema for PostgreSQL
+// Database: Yatra Rentals Nepal
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Model
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  phone         String?
+  role          UserRole  @default(CUSTOMER)
+  avatar        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  vehicles      Vehicle[]
+  bookings      Booking[]
+  reviews       Review[]
+
+  @@map("users")
+}
+
+// Vehicle Model
+model Vehicle {
+  id                  String             @id @default(uuid())
+  name                String
+  type                VehicleType
+  plateNumber         String             @unique
+  location            String
+  pricePerDay         Int
+  features            String[]
+  description         String?
+  available           Boolean            @default(true)
+  verificationStatus  VerificationStatus @default(PENDING)
+  insuranceIncluded   Boolean            @default(false)
+
+  // Owner
+  ownerId             String
+  owner               User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  // Relations
+  images              VehicleImage[]
+  documents           VehicleDocument[]
+  bookings            Booking[]
+  reviews             Review[]
+  damageReports       DamageReport[]
+
+  @@index([location])
+  @@index([type])
+  @@index([available])
+  @@index([verificationStatus])
+  @@map("vehicles")
+}
+
+// Vehicle Images
+model VehicleImage {
+  id        String   @id @default(uuid())
+  url       String
+  angle     String   // front, back, left, right
+  isPrimary Boolean  @default(false)
+
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([vehicleId])
+  @@map("vehicle_images")
+}
+
+// Vehicle Documents
+model VehicleDocument {
+  id        String   @id @default(uuid())
+  type      String   // billbook, insurance, registration
+  url       String
+
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([vehicleId])
+  @@map("vehicle_documents")
+}
+
+// Booking Model
+model Booking {
+  id          String        @id @default(uuid())
+  startDate   DateTime
+  endDate     DateTime
+  destination String
+  insurance   Boolean       @default(false)
+  totalPrice  Int
+  status      BookingStatus @default(PENDING)
+
+  // Customer
+  customerId  String
+  customer    User          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Vehicle
+  vehicleId   String
+  vehicle     Vehicle       @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  // Payment
+  payment     Payment?
+
+  // Timestamps
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([customerId])
+  @@index([vehicleId])
+  @@index([status])
+  @@index([startDate])
+  @@map("bookings")
+}
+
+// Payment Model
+model Payment {
+  id              String        @id @default(uuid())
+  amount          Int
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  transactionId   String?       @unique
+
+  bookingId       String        @unique
+  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status])
+  @@map("payments")
+}
+
+// Review Model
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int      // 1-5
+  comment   String
+
+  // Customer
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Vehicle
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([vehicleId])
+  @@index([userId])
+  @@map("reviews")
+}
+
+// Damage Report Model
+model DamageReport {
+  id          String   @id @default(uuid())
+  reportType  String   // PRE_RENTAL, POST_RENTAL
+  damages     Json     // Array of damage objects
+  totalDamages Int     @default(0)
+
+  vehicleId   String
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@index([vehicleId])
+  @@map("damage_reports")
+}
+
+// Notification Model
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  recipient String           // email or phone
+  subject   String
+  body      String
+  status    String           // SENT, FAILED
+
+  createdAt DateTime         @default(now())
+
+  @@index([recipient])
+  @@index([status])
+  @@map("notifications")
+}
+
+// Enums
+enum UserRole {
+  GUEST
+  CUSTOMER
+  OWNER
+  STAFF
+  ADMIN
+}
+
+enum VehicleType {
+  SUV
+  SEDAN
+  HATCHBACK
+  MOTORCYCLE
+  OFFROAD_4X4
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  ESEWA
+  KHALTI
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  PAYMENT_SUCCESSFUL
+  PAYMENT_FAILED
+  VEHICLE_VERIFIED
+  VEHICLE_REJECTED
+  BOOKING_REMINDER
+  BOOKING_COMPLETED
+}

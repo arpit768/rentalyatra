@@ -1,0 +1,24 @@
+# Robots.txt for Yatra Rentals Nepal
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /staff/
+Disallow: /owner/
+
+# Sitemaps
+Sitemap: https://yatrarentals.com/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 10
+
+# Specific bots
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Baiduspider
+Crawl-delay: 20
