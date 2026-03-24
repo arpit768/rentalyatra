@@ -7,12 +7,13 @@ export enum UserRole {
   GUEST = 'GUEST'
 }
 
-export enum VehicleType {
-  SUV = 'SUV',
-  SEDAN = 'Sedan',
-  HATCHBACK = 'Hatchback',
-  BIKE = 'Motorbike',
-  OFFROAD = '4x4 Offroad'
+export enum TourType {
+  ADVENTURE_TREK = 'Adventure Trek',
+  CULTURAL_TOUR = 'Cultural Tour',
+  WILDLIFE_SAFARI = 'Wildlife Safari',
+  MOUNTAIN_EXPEDITION = 'Mountain Expedition',
+  PILGRIMAGE = 'Pilgrimage',
+  CITY_TOUR = 'City Tour',
 }
 
 export enum VerificationStatus {
@@ -28,58 +29,48 @@ export interface User {
   email: string;
 }
 
-export interface VehicleSideImages {
-  front: string;
-  back: string;
-  left: string;
-  right: string;
-}
-
-export interface VehicleDocuments {
-  billbook: string; // Image URL of the Bluebook/Billbook
-  insurance: string; // Image URL of the Insurance Paper
-}
-
-export interface DamagePoint {
-  id: string;
-  part: 'bumper_front' | 'bumper_rear' | 'door_left' | 'door_right' | 'hood' | 'trunk' | 'windshield' | 'wheel';
-  severity: 'low' | 'medium' | 'critical';
-  description: string;
-  view: 'front' | 'back' | 'left' | 'right';
-}
-
-export interface Vehicle {
+export interface Tour {
   id: string;
   ownerId: string;
   name: string;
-  type: VehicleType;
-  pricePerDay: number;
+  type: TourType;
+  pricePerPerson: number;
   location: string;
-  image: string; // Primary thumbnail (usually front-left angle)
-  images?: VehicleSideImages; // Detailed 4-side view
-  documents?: VehicleDocuments; // Owner uploaded legal docs
+  image: string;
   available: boolean;
   verificationStatus: VerificationStatus;
   features: string[];
   description: string;
-  plateNumber: string;
-  conditionReport?: DamagePoint[]; // Array of detected damages
+  duration: number;
+  maxGroupSize: number;
+  difficulty: 'Easy' | 'Moderate' | 'Challenging' | 'Extreme';
 }
 
 export interface Booking {
   id: string;
-  vehicleId: string;
+  tourId: string;
   customerId: string;
   startDate: string;
   endDate: string;
+  numPeople: number;
   totalPrice: number;
   status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
-  destination: string; // Context specific for Nepal (e.g., permits needed?)
+  destination: string;
   insurance?: {
     type: string;
-    dailyRate: number;
+    ratePerPerson: number;
     totalCost: number;
   };
+}
+
+export interface AppNotification {
+  id: string;
+  message: string;
+  actorName: string;
+  actorRole: UserRole;
+  timestamp: string;
+  read: boolean;
+  forRole: UserRole | 'ALL';
 }
 
 export interface Message {

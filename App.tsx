@@ -8,8 +8,8 @@ import OwnerView from './components/OwnerView';
 import StaffView from './components/StaffView';
 import AdminView from './components/AdminView';
 import ProfileView from './components/ProfileView';
-import { User, UserRole, Vehicle, Booking } from './types';
-import { MOCK_VEHICLES, MOCK_BOOKINGS } from './constants';
+import { User, UserRole, Tour, Booking, AppNotification } from './types';
+import { MOCK_TOURS, MOCK_BOOKINGS } from './constants';
 import { ensureAdminStaffAccounts } from './services/initUsers';
 
 const App: React.FC = () => {
@@ -23,8 +23,25 @@ const App: React.FC = () => {
   }, []);
 
   // Simulating Backend Database State
-  const [vehicles, setVehicles] = useState<Vehicle[]>(MOCK_VEHICLES);
+  const [tours, setTours] = useState<Tour[]>(MOCK_TOURS);
   const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+
+  const handleAddNotification = (notification: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => {
+    const newNotification: AppNotification = {
+      ...notification,
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: new Date().toISOString(),
+      read: false,
+    };
+    setNotifications(prev => [newNotification, ...prev]);
+  };
+
+  const handleMarkNotificationsRead = (role: UserRole) => {
+    setNotifications(prev =>
+      prev.map(n => (n.forRole === role || n.forRole === 'ALL') ? { ...n, read: true } : n)
+    );
+  };
 
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
@@ -38,43 +55,43 @@ const App: React.FC = () => {
     setShowLogin(false);
   };
 
-  // Simulate creating a booking (Frontend connected to Backend)
+  // Simulate creating a booking
   const handleCreateBooking = (booking: Omit<Booking, 'id'>) => {
     const newBooking = {
       ...booking,
       id: Math.random().toString(36).substr(2, 9),
     };
     setBookings(prev => [newBooking, ...prev]);
-    alert("Booking request sent successfully! The owner will review it.");
+    alert("Booking request sent successfully! The tour operator will review it.");
   };
 
-  const handleAddVehicle = (vehicle: Omit<Vehicle, 'id'>) => {
-    const newVehicle = {
-      ...vehicle,
+  const handleAddTour = (tour: Omit<Tour, 'id'>) => {
+    const newTour = {
+      ...tour,
       id: Math.random().toString(36).substr(2, 9),
     };
-    setVehicles(prev => [...prev, newVehicle]);
-    alert("Vehicle listed successfully!");
+    setTours(prev => [...prev, newTour]);
+    alert("Tour package listed successfully!");
   };
 
-  // Simulate owner approving/rejecting (Backend logic)
+  // Simulate operator approving/rejecting
   const handleUpdateBookingStatus = (bookingId: string, status: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED') => {
-    setBookings(prev => prev.map(b => 
+    setBookings(prev => prev.map(b =>
       b.id === bookingId ? { ...b, status } : b
     ));
   };
 
-  // Handle vehicle updates (Verification, Damage Reports, Availability)
-  const handleUpdateVehicle = (id: string, updates: Partial<Vehicle>) => {
-    setVehicles(prev => prev.map(v =>
-        v.id === id ? { ...v, ...updates } : v
+  // Handle tour updates (Verification, Availability)
+  const handleUpdateTour = (id: string, updates: Partial<Tour>) => {
+    setTours(prev => prev.map(t =>
+        t.id === id ? { ...t, ...updates } : t
     ));
   };
 
-  // Simulate toggling availability (Simulated API Endpoint)
-  const handleToggleAvailability = (vehicleId: string) => {
-    setVehicles(prev => prev.map(v => 
-      v.id === vehicleId ? { ...v, available: !v.available } : v
+  // Simulate toggling availability
+  const handleToggleAvailability = (tourId: string) => {
+    setTours(prev => prev.map(t =>
+      t.id === tourId ? { ...t, available: !t.available } : t
     ));
   };
 
@@ -83,23 +100,30 @@ const App: React.FC = () => {
       if (showLogin) {
         return <Auth onLogin={handleLogin} />;
       }
-      return <LandingPage onGetStarted={() => setShowLogin(true)} vehicles={vehicles} />;
+      return <LandingPage onGetStarted={() => setShowLogin(true)} tours={tours} />;
     }
 
     // Authenticated Views
     return (
       <div className="min-h-screen bg-gray-50 font-sans">
-        <Navbar user={user} onLogout={handleLogout} onViewChange={setCurrentView} currentView={currentView} />
+        <Navbar
+          user={user}
+          onLogout={handleLogout}
+          onViewChange={setCurrentView}
+          currentView={currentView}
+          notifications={notifications}
+          onMarkNotificationsRead={handleMarkNotificationsRead}
+        />
 
         <main className="fade-in pb-20">
           {currentView === 'profile' && (
-            <ProfileView user={user} bookings={bookings} vehicles={vehicles} />
+            <ProfileView user={user} bookings={bookings} tours={tours} />
           )}
 
           {(currentView === 'dashboard' || currentView === 'customer') && user.role === UserRole.CUSTOMER && (
             <CustomerView
               user={user}
-              vehicles={vehicles}
+              tours={tours}
               bookings={bookings}
               onCreateBooking={handleCreateBooking}
             />
@@ -108,31 +132,34 @@ const App: React.FC = () => {
           {(currentView === 'dashboard' || currentView === 'owner') && user.role === UserRole.OWNER && (
             <OwnerView
               user={user}
-              vehicles={vehicles}
+              tours={tours}
               bookings={bookings}
               onUpdateBookingStatus={handleUpdateBookingStatus}
-              onAddVehicle={handleAddVehicle}
+              onAddTour={handleAddTour}
               onToggleAvailability={handleToggleAvailability}
-              onUpdateVehicle={handleUpdateVehicle}
+              onUpdateTour={handleUpdateTour}
             />
           )}
 
           {(currentView === 'dashboard' || currentView === 'staff') && user.role === UserRole.STAFF && (
             <StaffView
               user={user}
-              vehicles={vehicles}
+              tours={tours}
               bookings={bookings}
               onUpdateBookingStatus={handleUpdateBookingStatus}
-              onUpdateVehicle={handleUpdateVehicle}
+              onUpdateTour={handleUpdateTour}
+              onAddTour={handleAddTour}
+              onAddNotification={handleAddNotification}
             />
           )}
 
           {(currentView === 'dashboard' || currentView === 'admin') && user.role === UserRole.ADMIN && (
             <AdminView
               user={user}
-              vehicles={vehicles}
+              tours={tours}
               bookings={bookings}
-              onUpdateVehicle={handleUpdateVehicle}
+              onUpdateTour={handleUpdateTour}
+              onAddTour={handleAddTour}
             />
           )}
         </main>
@@ -141,31 +168,31 @@ const App: React.FC = () => {
         <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
           <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
-              <h2 className="text-white font-bold text-xl mb-4">Yatra Rentals Nepal</h2>
+              <h2 className="text-white font-bold text-xl mb-4">Community Tours and Travels</h2>
               <p className="text-sm leading-relaxed max-w-xs">
-                Empowering travelers to explore the Himalayas with reliable vehicles. 
-                Connecting vehicle owners with global adventurers.
+                Empowering travelers to explore the Himalayas with unforgettable tour experiences.
+                Connecting tour operators with global adventurers.
               </p>
             </div>
             <div>
               <h3 className="text-white font-semibold mb-4">Platform</h3>
               <ul className="space-y-2 text-sm">
-                <li><button className="hover:text-white">Browse Vehicles</button></li>
-                <li><button className="hover:text-white">List Your Car</button></li>
-                <li><button className="hover:text-white">Safety & Insurance</button></li>
+                <li><button className="hover:text-white">Browse Tours</button></li>
+                <li><button className="hover:text-white">List Your Tour</button></li>
+                <li><button className="hover:text-white">Travel Insurance</button></li>
               </ul>
             </div>
             <div>
               <h3 className="text-white font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-sm">
                 <li><button className="hover:text-white">Help Center</button></li>
-                <li><button className="hover:text-white">Roadside Assistance</button></li>
+                <li><button className="hover:text-white">Emergency Support</button></li>
                 <li><button className="hover:text-white">Contact Us</button></li>
               </ul>
             </div>
           </div>
           <div className="max-w-7xl mx-auto px-4 mt-12 pt-8 border-t border-slate-800 text-sm text-center">
-            &copy; {new Date().getFullYear()} Yatra Rentals Pvt. Ltd. Kathmandu.
+            &copy; {new Date().getFullYear()} Community Tours and Travels Pvt. Ltd. Kathmandu.
           </div>
         </footer>
       </div>

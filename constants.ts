@@ -1,7 +1,7 @@
 
-import { UserRole, VehicleType, Vehicle, Booking, VerificationStatus } from './types';
+import { TourType, Tour, Booking, VerificationStatus } from './types';
 
-export const APP_NAME = "Yatra Rentals";
+export const APP_NAME = "Community Tours and Travels";
 
 export const NEPAL_LOCATIONS = [
   "Kathmandu",
@@ -10,140 +10,114 @@ export const NEPAL_LOCATIONS = [
   "Lumbini",
   "Mustang",
   "Nagarkot",
-  "Lukla (Base)",
+  "Lukla (EBC)",
   "Biratnagar"
 ];
 
-const DEFAULT_IMAGES = {
-  front: 'https://images.unsplash.com/photo-1633649647240-3490b4d4512c?auto=format&fit=crop&q=80&w=400',
-  back: 'https://images.unsplash.com/photo-1633649647240-3490b4d4512c?auto=format&fit=crop&q=80&w=400',
-  left: 'https://images.unsplash.com/photo-1633649647240-3490b4d4512c?auto=format&fit=crop&q=80&w=400',
-  right: 'https://images.unsplash.com/photo-1633649647240-3490b4d4512c?auto=format&fit=crop&q=80&w=400',
-};
-
-// Mock document for verified vehicles
-const MOCK_DOCS = {
-    billbook: 'https://images.unsplash.com/photo-1618042164219-62c820f10723?auto=format&fit=crop&q=80&w=300',
-    insurance: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=300'
-};
-
-export const MOCK_VEHICLES: Vehicle[] = [
+export const MOCK_TOURS: Tour[] = [
   {
-    id: 'v1',
+    id: 't1',
     ownerId: 'o1',
-    name: 'Mahindra Scorpio 4WD',
-    type: VehicleType.SUV,
-    pricePerDay: 5000,
-    location: 'Kathmandu',
-    image: 'https://images.unsplash.com/photo-1633649647240-3490b4d4512c?auto=format&fit=crop&q=80&w=800',
-    images: {
-      front: 'https://images.unsplash.com/photo-1633649647240-3490b4d4512c?auto=format&fit=crop&q=80&w=400',
-      back: 'https://images.unsplash.com/photo-1633649647240-3490b4d4512c?auto=format&fit=crop&q=80&w=400',
-      left: 'https://images.unsplash.com/photo-1633649647240-3490b4d4512c?auto=format&fit=crop&q=80&w=400',
-      right: 'https://images.unsplash.com/photo-1633649647240-3490b4d4512c?auto=format&fit=crop&q=80&w=400',
-    },
-    documents: MOCK_DOCS,
-    available: true,
-    verificationStatus: VerificationStatus.VERIFIED,
-    features: ['4WD', '7 Seater', 'AC', 'Roof Carrier'],
-    description: 'The **undisputed king** of Nepali roads. Perfect for family trips to *Mustang* or navigating the bumpy Prithvi Highway.\n- High Ground Clearance\n- Powerful Diesel Engine\n- Spacious 7-seat configuration',
-    plateNumber: 'BA 21 PA 1234',
-    conditionReport: [
-      { id: 'd1', part: 'bumper_front', severity: 'medium', description: 'Scratch from off-road debris', view: 'front' }
-    ]
-  },
-  {
-    id: 'v2',
-    ownerId: 'o1',
-    name: 'Royal Enfield Classic 350',
-    type: VehicleType.BIKE,
-    pricePerDay: 1500,
+    name: 'Annapurna Base Camp Trek',
+    type: TourType.ADVENTURE_TREK,
+    pricePerPerson: 25000,
     location: 'Pokhara',
-    image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=800',
-    images: DEFAULT_IMAGES,
-    documents: MOCK_DOCS,
+    image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=800',
     available: true,
     verificationStatus: VerificationStatus.VERIFIED,
-    features: ['350cc', 'Helmet Included', 'Leg Guard'],
-    description: 'Experience the *Annapurna Circuit* on two wheels. The classic thump echoes through the mountains.\n- **Two Helmets Included**\n- Saddle bags available on request\n- Best for solo or couple riders',
-    plateNumber: 'GA 15 PA 5678',
-    conditionReport: []
+    features: ['Expert Guide', 'Porter Service', 'ACAP Permits', 'Teahouse Stays', 'All Meals'],
+    description: '**A legendary trek** through the heart of the Annapurna Sanctuary. Experience breathtaking views of Annapurna I, Hiunchuli, and Machapuchare.\n- **Expert Mountain Guides**\n- ACAP Permits Included\n- Teahouse accommodations throughout',
+    duration: 12,
+    maxGroupSize: 12,
+    difficulty: 'Challenging',
   },
   {
-    id: 'v3',
+    id: 't2',
+    ownerId: 'o1',
+    name: 'Chitwan Wildlife Safari',
+    type: TourType.WILDLIFE_SAFARI,
+    pricePerPerson: 12000,
+    location: 'Chitwan',
+    image: 'https://images.unsplash.com/photo-1549366021-9f761d450615?auto=format&fit=crop&q=80&w=800',
+    available: true,
+    verificationStatus: VerificationStatus.VERIFIED,
+    features: ['Jungle Jeep Safari', 'Elephant Bathing', 'Bird Watching', 'Canoe Ride', 'Resort Stay'],
+    description: 'Explore the *UNESCO World Heritage* Chitwan National Park. Spot rhinos, tigers, and exotic birds in their natural habitat.\n- **Jeep & Walking Safaris**\n- Tharu Cultural Show\n- All Meals & Transfers Included',
+    duration: 3,
+    maxGroupSize: 8,
+    difficulty: 'Easy',
+  },
+  {
+    id: 't3',
     ownerId: 'o2',
-    name: 'Hyundai Creta',
-    type: VehicleType.SUV,
-    pricePerDay: 4500,
+    name: 'Kathmandu Cultural Heritage Tour',
+    type: TourType.CULTURAL_TOUR,
+    pricePerPerson: 8500,
     location: 'Kathmandu',
-    image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&q=80&w=800',
-    images: DEFAULT_IMAGES,
-    documents: MOCK_DOCS,
+    image: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?auto=format&fit=crop&q=80&w=800',
     available: true,
     verificationStatus: VerificationStatus.VERIFIED,
-    features: ['Automatic', 'Sunroof', 'Bluetooth', '5 Seater'],
-    description: 'A premium compact SUV offering a **smooth city drive** and comfort for highway travel to *Chitwan*.\n- Panoramic Sunroof\n- Automatic Transmission\n- Modern Infotainment System',
-    plateNumber: 'BA 10 CHA 9900',
-    conditionReport: []
+    features: ['7 UNESCO Sites', 'Expert Guide', 'Private Transfers', 'Lunch Included', 'Museum Entry'],
+    description: 'Discover the **7 UNESCO World Heritage Sites** of the Kathmandu Valley in this immersive cultural experience.\n- Pashupatinath Temple, Boudhanath Stupa\n- Patan & Bhaktapur Durbar Squares\n- **Traditional Newari Cuisine**',
+    duration: 2,
+    maxGroupSize: 15,
+    difficulty: 'Easy',
   },
   {
-    id: 'v4',
+    id: 't4',
     ownerId: 'o3',
-    name: 'Toyota Land Cruiser Prado',
-    type: VehicleType.OFFROAD,
-    pricePerDay: 15000,
-    location: 'Kathmandu',
-    image: 'https://images.unsplash.com/photo-1594502184342-28efcb0a5748?auto=format&fit=crop&q=80&w=800',
-    images: DEFAULT_IMAGES,
-    documents: MOCK_DOCS,
+    name: 'Everest Base Camp Expedition',
+    type: TourType.MOUNTAIN_EXPEDITION,
+    pricePerPerson: 85000,
+    location: 'Lukla (EBC)',
+    image: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&q=80&w=800',
     available: false,
     verificationStatus: VerificationStatus.VERIFIED,
-    features: ['Luxury', '4WD', 'Heated Seats', 'GPS'],
-    description: 'The ultimate **luxury off-roader** for VIP guests. Conquer any terrain in absolute comfort.\n- Heated Leather Seats\n- Advanced 4x4 System\n- **Chauffeur Service** Available',
-    plateNumber: 'BA 01 PA 0001',
-    conditionReport: [
-        { id: 'd2', part: 'door_left', severity: 'low', description: 'Minor dent', view: 'left' },
-        { id: 'd3', part: 'wheel', severity: 'critical', description: 'Worn out treads', view: 'left' }
-    ]
+    features: ['Lukla Flight', 'All Permits', 'Sherpa Guide', 'Teahouse Stays', 'Emergency Evacuation'],
+    description: 'The ultimate **Himalayan bucket-list experience**. Trek to the foot of the world\'s highest mountain through Sherpa villages and dramatic landscapes.\n- Sagarmatha National Park Permits\n- **Experienced Sherpa Guides**\n- Oxygen & Medical Support',
+    duration: 16,
+    maxGroupSize: 8,
+    difficulty: 'Extreme',
   },
   {
-    id: 'v5',
+    id: 't5',
     ownerId: 'o2',
-    name: 'Maruti Suzuki Swift',
-    type: VehicleType.HATCHBACK,
-    pricePerDay: 3000,
-    location: 'Biratnagar',
-    image: 'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&q=80&w=800',
-    images: DEFAULT_IMAGES,
-    documents: MOCK_DOCS,
+    name: 'Lumbini Pilgrimage & Peace Tour',
+    type: TourType.PILGRIMAGE,
+    pricePerPerson: 9500,
+    location: 'Lumbini',
+    image: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&q=80&w=800',
     available: true,
     verificationStatus: VerificationStatus.PENDING,
-    features: ['Economical', 'AC', 'Compact'],
-    description: 'Your reliable companion for city errands and flat terrain travel in the *Terai region*.\n- **Fuel Efficient**\n- Easy to Park\n- Budget Friendly',
-    plateNumber: 'KO 1 CHA 5555',
-    conditionReport: []
+    features: ['Maya Devi Temple', 'Monastic Zone', 'World Peace Pagoda', 'Expert Guide', 'Transfers'],
+    description: 'Journey to the **birthplace of Lord Buddha** in this peaceful spiritual tour through Lumbini\'s sacred grounds.\n- Maya Devi Temple Visit\n- International Buddhist Monasteries\n- **Guided Meditation Sessions**',
+    duration: 3,
+    maxGroupSize: 20,
+    difficulty: 'Easy',
   }
 ];
 
 export const MOCK_BOOKINGS: Booking[] = [
   {
     id: 'b1',
-    vehicleId: 'v1',
+    tourId: 't1',
     customerId: 'c1',
-    startDate: '2023-11-01',
-    endDate: '2023-11-05',
-    totalPrice: 20000,
+    startDate: '2026-04-15',
+    endDate: '2026-04-27',
+    numPeople: 2,
+    totalPrice: 50000,
     status: 'CONFIRMED',
-    destination: 'Pokhara'
+    destination: 'Annapurna Sanctuary',
   },
   {
     id: 'b2',
-    vehicleId: 'v3',
+    tourId: 't3',
     customerId: 'c1',
-    startDate: '2023-12-10',
-    endDate: '2023-12-12',
-    totalPrice: 9000,
+    startDate: '2026-05-05',
+    endDate: '2026-05-07',
+    numPeople: 3,
+    totalPrice: 25500,
     status: 'PENDING',
-    destination: 'Nagarkot'
+    destination: 'Kathmandu Valley',
   }
 ];

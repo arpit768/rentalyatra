@@ -1,4 +1,4 @@
-// Simple Express.js Backend for Yatra Rentals Nepal
+// Simple Express.js Backend for Community Tours and Travels
 // This is a mock server for development purposes
 
 const express = require('express');
@@ -44,7 +44,7 @@ const upload = multer({
 
 // In-memory database (replace with real database in production)
 let users = [];
-let vehicles = [];
+let tours = [];
 let bookings = [];
 let reviews = [];
 
@@ -68,6 +68,11 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+
+// Health check
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: '🚀 Community Tours and Travels API is running', version: '1.0.0' });
+});
 
 // ============ AUTH ROUTES ============
 
@@ -130,35 +135,35 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
   res.json(userWithoutPassword);
 });
 
-// ============ VEHICLES ROUTES ============
+// ============ TOUR ROUTES ============
 
-app.get('/api/vehicles', (req, res) => {
+app.get('/api/tours', (req, res) => {
   const { location, type, available, verificationStatus } = req.query;
 
-  let filtered = vehicles;
+  let filtered = tours;
 
-  if (location) filtered = filtered.filter(v => v.location === location);
-  if (type) filtered = filtered.filter(v => v.type === type);
-  if (available !== undefined) filtered = filtered.filter(v => v.available === (available === 'true'));
-  if (verificationStatus) filtered = filtered.filter(v => v.verificationStatus === verificationStatus);
+  if (location) filtered = filtered.filter(t => t.location === location);
+  if (type) filtered = filtered.filter(t => t.type === type);
+  if (available !== undefined) filtered = filtered.filter(t => t.available === (available === 'true'));
+  if (verificationStatus) filtered = filtered.filter(t => t.verificationStatus === verificationStatus);
 
   res.json(filtered);
 });
 
-app.get('/api/vehicles/:id', (req, res) => {
-  const vehicle = vehicles.find(v => v.id === req.params.id);
-  if (!vehicle) {
-    return res.status(404).json({ message: 'Vehicle not found' });
+app.get('/api/tours/:id', (req, res) => {
+  const tour = tours.find(t => t.id === req.params.id);
+  if (!tour) {
+    return res.status(404).json({ message: 'Tour package not found' });
   }
-  res.json(vehicle);
+  res.json(tour);
 });
 
-app.post('/api/vehicles', authenticateToken, (req, res) => {
+app.post('/api/tours', authenticateToken, (req, res) => {
   if (req.user.role !== 'OWNER' && req.user.role !== 'ADMIN') {
-    return res.status(403).json({ message: 'Only owners can add vehicles' });
+    return res.status(403).json({ message: 'Only tour operators can add packages' });
   }
 
-  const vehicle = {
+  const tour = {
     id: generateId(),
     ...req.body,
     ownerId: req.user.id,
@@ -167,75 +172,75 @@ app.post('/api/vehicles', authenticateToken, (req, res) => {
     createdAt: new Date().toISOString()
   };
 
-  vehicles.push(vehicle);
-  res.status(201).json(vehicle);
+  tours.push(tour);
+  res.status(201).json(tour);
 });
 
-app.patch('/api/vehicles/:id', authenticateToken, (req, res) => {
-  const index = vehicles.findIndex(v => v.id === req.params.id);
+app.patch('/api/tours/:id', authenticateToken, (req, res) => {
+  const index = tours.findIndex(t => t.id === req.params.id);
   if (index === -1) {
-    return res.status(404).json({ message: 'Vehicle not found' });
+    return res.status(404).json({ message: 'Tour package not found' });
   }
 
-  const vehicle = vehicles[index];
+  const tour = tours[index];
 
   // Check permissions
-  if (vehicle.ownerId !== req.user.id && req.user.role !== 'ADMIN' && req.user.role !== 'STAFF') {
+  if (tour.ownerId !== req.user.id && req.user.role !== 'ADMIN' && req.user.role !== 'STAFF') {
     return res.status(403).json({ message: 'Unauthorized' });
   }
 
-  vehicles[index] = { ...vehicle, ...req.body, updatedAt: new Date().toISOString() };
-  res.json(vehicles[index]);
+  tours[index] = { ...tour, ...req.body, updatedAt: new Date().toISOString() };
+  res.json(tours[index]);
 });
 
-app.patch('/api/vehicles/:id/toggle-availability', authenticateToken, (req, res) => {
-  const index = vehicles.findIndex(v => v.id === req.params.id);
+app.patch('/api/tours/:id/toggle-availability', authenticateToken, (req, res) => {
+  const index = tours.findIndex(t => t.id === req.params.id);
   if (index === -1) {
-    return res.status(404).json({ message: 'Vehicle not found' });
+    return res.status(404).json({ message: 'Tour package not found' });
   }
 
-  const vehicle = vehicles[index];
-  if (vehicle.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
+  const tour = tours[index];
+  if (tour.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
     return res.status(403).json({ message: 'Unauthorized' });
   }
 
-  vehicles[index].available = !vehicles[index].available;
-  res.json(vehicles[index]);
+  tours[index].available = !tours[index].available;
+  res.json(tours[index]);
 });
 
-app.patch('/api/vehicles/:id/verify', authenticateToken, (req, res) => {
+app.patch('/api/tours/:id/verify', authenticateToken, (req, res) => {
   if (req.user.role !== 'STAFF' && req.user.role !== 'ADMIN') {
-    return res.status(403).json({ message: 'Only staff can verify vehicles' });
+    return res.status(403).json({ message: 'Only staff can verify tour packages' });
   }
 
-  const index = vehicles.findIndex(v => v.id === req.params.id);
+  const index = tours.findIndex(t => t.id === req.params.id);
   if (index === -1) {
-    return res.status(404).json({ message: 'Vehicle not found' });
+    return res.status(404).json({ message: 'Tour package not found' });
   }
 
-  vehicles[index].verificationStatus = req.body.verificationStatus;
-  res.json(vehicles[index]);
+  tours[index].verificationStatus = req.body.verificationStatus;
+  res.json(tours[index]);
 });
 
-app.delete('/api/vehicles/:id', authenticateToken, (req, res) => {
-  const index = vehicles.findIndex(v => v.id === req.params.id);
+app.delete('/api/tours/:id', authenticateToken, (req, res) => {
+  const index = tours.findIndex(t => t.id === req.params.id);
   if (index === -1) {
-    return res.status(404).json({ message: 'Vehicle not found' });
+    return res.status(404).json({ message: 'Tour package not found' });
   }
 
-  const vehicle = vehicles[index];
-  if (vehicle.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
+  const tour = tours[index];
+  if (tour.ownerId !== req.user.id && req.user.role !== 'ADMIN') {
     return res.status(403).json({ message: 'Unauthorized' });
   }
 
-  vehicles.splice(index, 1);
-  res.json({ message: 'Vehicle deleted successfully' });
+  tours.splice(index, 1);
+  res.json({ message: 'Tour package deleted successfully' });
 });
 
 // ============ BOOKINGS ROUTES ============
 
 app.get('/api/bookings', authenticateToken, (req, res) => {
-  const { customerId, vehicleId, status } = req.query;
+  const { customerId, tourId, status } = req.query;
 
   let filtered = bookings;
 
@@ -243,12 +248,12 @@ app.get('/api/bookings', authenticateToken, (req, res) => {
   if (req.user.role === 'CUSTOMER') {
     filtered = filtered.filter(b => b.customerId === req.user.id);
   } else if (req.user.role === 'OWNER') {
-    const myVehicleIds = vehicles.filter(v => v.ownerId === req.user.id).map(v => v.id);
-    filtered = filtered.filter(b => myVehicleIds.includes(b.vehicleId));
+    const myTourIds = tours.filter(t => t.ownerId === req.user.id).map(t => t.id);
+    filtered = filtered.filter(b => myTourIds.includes(b.tourId));
   }
 
   if (customerId) filtered = filtered.filter(b => b.customerId === customerId);
-  if (vehicleId) filtered = filtered.filter(b => b.vehicleId === vehicleId);
+  if (tourId) filtered = filtered.filter(b => b.tourId === tourId);
   if (status) filtered = filtered.filter(b => b.status === status);
 
   res.json(filtered);
@@ -263,13 +268,13 @@ app.get('/api/bookings/:id', authenticateToken, (req, res) => {
 });
 
 app.post('/api/bookings', authenticateToken, (req, res) => {
-  const vehicle = vehicles.find(v => v.id === req.body.vehicleId);
-  if (!vehicle) {
-    return res.status(404).json({ message: 'Vehicle not found' });
+  const tour = tours.find(t => t.id === req.body.tourId);
+  if (!tour) {
+    return res.status(404).json({ message: 'Tour package not found' });
   }
 
-  if (!vehicle.available) {
-    return res.status(400).json({ message: 'Vehicle is not available' });
+  if (!tour.available) {
+    return res.status(400).json({ message: 'Tour package is not available' });
   }
 
   const booking = {
@@ -320,9 +325,9 @@ app.post('/api/upload/multiple', authenticateToken, upload.array('files', 10), (
 
 // ============ REVIEWS ROUTES ============
 
-app.get('/api/reviews/vehicle/:vehicleId', (req, res) => {
-  const vehicleReviews = reviews.filter(r => r.vehicleId === req.params.vehicleId);
-  res.json(vehicleReviews);
+app.get('/api/reviews/tour/:tourId', (req, res) => {
+  const tourReviews = reviews.filter(r => r.tourId === req.params.tourId);
+  res.json(tourReviews);
 });
 
 app.post('/api/reviews', authenticateToken, (req, res) => {
@@ -346,7 +351,7 @@ app.get('/api/analytics/stats', authenticateToken, (req, res) => {
   }
 
   const stats = {
-    totalVehicles: vehicles.length,
+    totalTours: tours.length,
     totalBookings: bookings.length,
     totalRevenue: bookings
       .filter(b => b.status === 'COMPLETED')
@@ -365,6 +370,6 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Yatra Rentals API Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Community Tours and Travels API Server running on http://localhost:${PORT}`);
   console.log(`📁 Uploads directory: ${path.join(__dirname, 'uploads')}`);
 });

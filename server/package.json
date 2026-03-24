@@ -1,33 +1,22 @@
 {
-  "name": "yatra-rentals-server",
-  "version": "3.0.0",
-  "description": "Backend API for Yatra Rentals Nepal",
+  "name": "community-tours-server",
+  "version": "1.0.0",
+  "description": "Backend API for Community Tours and Travels",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio",
-    "prisma:seed": "node prisma/seed.js",
-    "db:push": "prisma db push",
-    "db:reset": "prisma migrate reset"
+    "dev": "nodemon server.js"
   },
-  "keywords": ["rental", "vehicle", "nepal", "api"],
-  "author": "Yatra Rentals Nepal",
+  "keywords": ["tours", "travel", "nepal", "api"],
+  "author": "Community Tours and Travels",
   "license": "MIT",
   "dependencies": {
-    "@prisma/client": "^5.8.0",
-    "bcryptjs": "^2.4.3",
-    "express": "^4.18.2",
     "cors": "^2.8.5",
+    "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1",
-    "mongoose": "^8.1.0",
-    "dotenv": "^16.3.1"
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1",
-    "prisma": "^5.8.0"
+    "nodemon": "^3.0.1"
   }
 }

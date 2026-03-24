@@ -1,44 +1,44 @@
 import { useState } from 'react';
-import { Plus, Edit2, Eye, EyeOff, Calendar, DollarSign, MapPin, X } from 'lucide-react';
-import { VerificationStatus } from '../types';
-import { VehicleType } from '../types';
-import type { Vehicle, Booking, User } from '../types';
+import { Plus, Eye, EyeOff, Calendar, DollarSign, MapPin, X, Clock, Users } from 'lucide-react';
+import { VerificationStatus, TourType } from '../types';
+import type { Tour, Booking, User } from '../types';
 
 interface OwnerViewProps {
-  vehicles: Vehicle[];
+  tours: Tour[];
   bookings: Booking[];
   user: User;
-  onAddVehicle: (vehicle: Omit<Vehicle, 'id'>) => void;
-  onUpdateVehicle: (id: string, vehicle: Partial<Vehicle>) => void;
+  onAddTour: (tour: Omit<Tour, 'id'>) => void;
+  onUpdateTour: (id: string, tour: Partial<Tour>) => void;
   onToggleAvailability: (id: string) => void;
   onUpdateBookingStatus: (id: string, status: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED') => void;
 }
 
 export default function OwnerView({
-  vehicles,
+  tours,
   bookings,
   user,
-  onAddVehicle,
-  onUpdateVehicle,
+  onAddTour,
   onToggleAvailability,
   onUpdateBookingStatus,
 }: OwnerViewProps) {
-  const [activeTab, setActiveTab] = useState<'vehicles' | 'bookings'>('vehicles');
+  const [activeTab, setActiveTab] = useState<'tours' | 'bookings'>('tours');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newVehicle, setNewVehicle] = useState({
+  const [newTour, setNewTour] = useState({
     name: '',
-    type: VehicleType.SUV as Vehicle['type'],
-    pricePerDay: 0,
+    type: TourType.ADVENTURE_TREK as Tour['type'],
+    pricePerPerson: 0,
     location: '',
     image: '',
     description: '',
     features: '',
-    plateNumber: '',
+    duration: 1,
+    maxGroupSize: 10,
+    difficulty: 'Moderate' as Tour['difficulty'],
   });
 
-  const myVehicles = vehicles.filter(v => v.ownerId === user.id);
-  const myVehicleIds = myVehicles.map(v => v.id);
-  const myBookings = bookings.filter(b => myVehicleIds.includes(b.vehicleId));
+  const myTours = tours.filter(t => t.ownerId === user.id);
+  const myTourIds = myTours.map(t => t.id);
+  const myBookings = bookings.filter(b => myTourIds.includes(b.tourId));
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -59,37 +59,51 @@ export default function OwnerView({
     }
   };
 
-  const handleAddVehicle = () => {
-    if (!newVehicle.name || !newVehicle.location || !newVehicle.pricePerDay || !newVehicle.plateNumber) {
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Easy': return 'bg-green-100 text-green-700';
+      case 'Moderate': return 'bg-yellow-100 text-yellow-700';
+      case 'Challenging': return 'bg-orange-100 text-orange-700';
+      case 'Extreme': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const handleAddTour = () => {
+    if (!newTour.name || !newTour.location || !newTour.pricePerPerson || !newTour.duration) {
       alert('Please fill all required fields');
       return;
     }
 
-    const vehicle: Omit<Vehicle, 'id'> = {
+    const tour: Omit<Tour, 'id'> = {
       ownerId: user.id,
-      name: newVehicle.name,
-      type: newVehicle.type,
-      pricePerDay: Number(newVehicle.pricePerDay),
-      location: newVehicle.location,
-      image: newVehicle.image || 'https://via.placeholder.com/400x300?text=Vehicle',
-      description: newVehicle.description,
-      features: newVehicle.features.split(',').map(f => f.trim()).filter(Boolean),
+      name: newTour.name,
+      type: newTour.type,
+      pricePerPerson: Number(newTour.pricePerPerson),
+      location: newTour.location,
+      image: newTour.image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=400',
+      description: newTour.description,
+      features: newTour.features.split(',').map(f => f.trim()).filter(Boolean),
       available: true,
       verificationStatus: VerificationStatus.PENDING,
-      plateNumber: newVehicle.plateNumber,
+      duration: Number(newTour.duration),
+      maxGroupSize: Number(newTour.maxGroupSize),
+      difficulty: newTour.difficulty,
     };
 
-    onAddVehicle(vehicle);
+    onAddTour(tour);
     setShowAddModal(false);
-    setNewVehicle({
+    setNewTour({
       name: '',
-      type: VehicleType.SUV,
-      pricePerDay: 0,
+      type: TourType.ADVENTURE_TREK,
+      pricePerPerson: 0,
       location: '',
       image: '',
       description: '',
       features: '',
-      plateNumber: '',
+      duration: 1,
+      maxGroupSize: 10,
+      difficulty: 'Moderate',
     });
   };
 
@@ -100,41 +114,47 @@ export default function OwnerView({
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Owner Dashboard</h1>
-          <p className="text-gray-600">Welcome back, {user.name}</p>
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Gradient Header */}
+      <div className="bg-gradient-to-r from-purple-900 to-indigo-900 text-white">
+        <div className="container mx-auto px-4 py-12">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Tour Operator Dashboard</h1>
+              <p className="text-purple-200 text-lg">Welcome back, {user.name}. Manage your packages and bookings.</p>
+            </div>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-white text-purple-900 rounded-xl font-semibold hover:bg-purple-50 transition-all shadow-lg self-start"
+            >
+              <Plus className="w-5 h-5" />
+              Add Tour Package
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md"
-        >
-          <Plus className="w-5 h-5" />
-          Add Vehicle
-        </button>
       </div>
 
+      <div className="container mx-auto px-4 -mt-6">
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <p className="text-gray-600 text-sm mb-1">Total Vehicles</p>
-          <p className="text-3xl font-bold text-gray-900">{myVehicles.length}</p>
+        <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+          <p className="text-gray-500 text-sm mb-1 font-medium">Tour Packages</p>
+          <p className="text-3xl font-bold text-gray-900">{myTours.length}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <p className="text-gray-600 text-sm mb-1">Active Bookings</p>
+        <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+          <p className="text-gray-500 text-sm mb-1 font-medium">Active Bookings</p>
           <p className="text-3xl font-bold text-blue-600">
             {myBookings.filter(b => b.status === 'CONFIRMED').length}
           </p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <p className="text-gray-600 text-sm mb-1">Pending Requests</p>
+        <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+          <p className="text-gray-500 text-sm mb-1 font-medium">Pending Requests</p>
           <p className="text-3xl font-bold text-yellow-600">
             {myBookings.filter(b => b.status === 'PENDING').length}
           </p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <p className="text-gray-600 text-sm mb-1">Total Earnings</p>
+        <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+          <p className="text-gray-500 text-sm mb-1 font-medium">Total Earnings</p>
           <p className="text-3xl font-bold text-green-600">
             NPR {calculateEarnings().toLocaleString()}
           </p>
@@ -144,14 +164,14 @@ export default function OwnerView({
       {/* Tabs */}
       <div className="flex gap-4 mb-8 border-b border-gray-200">
         <button
-          onClick={() => setActiveTab('vehicles')}
+          onClick={() => setActiveTab('tours')}
           className={`px-6 py-3 font-semibold border-b-2 transition-colors ${
-            activeTab === 'vehicles'
+            activeTab === 'tours'
               ? 'border-blue-600 text-blue-600'
               : 'border-transparent text-gray-600 hover:text-gray-900'
           }`}
         >
-          My Vehicles ({myVehicles.length})
+          My Tour Packages ({myTours.length})
         </button>
         <button
           onClick={() => setActiveTab('bookings')}
@@ -165,53 +185,70 @@ export default function OwnerView({
         </button>
       </div>
 
-      {/* My Vehicles Tab */}
-      {activeTab === 'vehicles' && (
+      {/* My Tours Tab */}
+      {activeTab === 'tours' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {myVehicles.map((vehicle) => (
-            <div key={vehicle.id} className="bg-white rounded-xl shadow-md overflow-hidden">
+          {myTours.map((tour) => (
+            <div key={tour.id} className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="relative h-48 bg-gray-200">
                 <img
-                  src={vehicle.image}
-                  alt={vehicle.name}
+                  src={tour.image}
+                  alt={tour.name}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-4 right-4 flex gap-2">
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getVerificationColor(vehicle.verificationStatus)}`}>
-                    {vehicle.verificationStatus}
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getVerificationColor(tour.verificationStatus)}`}>
+                    {tour.verificationStatus}
                   </span>
                 </div>
               </div>
               <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{vehicle.name}</h3>
-                <div className="flex items-center gap-2 text-gray-600 mb-3">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-sm">{vehicle.location}</span>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{tour.name}</h3>
+                <div className="space-y-2 text-sm text-gray-600 mb-3">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    <span>{tour.location}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      <span>{tour.duration} days</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Users className="w-4 h-4" />
+                      <span>Max {tour.maxGroupSize}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${getDifficultyColor(tour.difficulty)}`}>
+                      {tour.difficulty}
+                    </span>
+                  </div>
                 </div>
                 <div className="mb-4">
                   <span className="text-2xl font-bold text-blue-600">
-                    NPR {vehicle.pricePerDay.toLocaleString()}
+                    NPR {tour.pricePerPerson.toLocaleString()}
                   </span>
-                  <span className="text-gray-500 text-sm">/day</span>
+                  <span className="text-gray-500 text-sm">/person</span>
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => onToggleAvailability(vehicle.id)}
+                    onClick={() => onToggleAvailability(tour.id)}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                      vehicle.available
+                      tour.available
                         ? 'bg-green-100 text-green-700 hover:bg-green-200'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    {vehicle.available ? (
+                    {tour.available ? (
                       <>
                         <Eye className="w-4 h-4" />
-                        Available
+                        Active
                       </>
                     ) : (
                       <>
                         <EyeOff className="w-4 h-4" />
-                        Unavailable
+                        Inactive
                       </>
                     )}
                   </button>
@@ -220,14 +257,14 @@ export default function OwnerView({
             </div>
           ))}
 
-          {myVehicles.length === 0 && (
+          {myTours.length === 0 && (
             <div className="col-span-full text-center py-12 bg-white rounded-lg">
-              <p className="text-gray-500 mb-4">No vehicles listed yet</p>
+              <p className="text-gray-500 mb-4">No tour packages listed yet</p>
               <button
                 onClick={() => setShowAddModal(true)}
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
-                Add your first vehicle
+                Add your first tour package
               </button>
             </div>
           )}
@@ -244,21 +281,21 @@ export default function OwnerView({
             </div>
           ) : (
             myBookings.map((booking) => {
-              const vehicle = vehicles.find(v => v.id === booking.vehicleId);
-              if (!vehicle) return null;
+              const tour = tours.find(t => t.id === booking.tourId);
+              if (!tour) return null;
 
               return (
                 <div key={booking.id} className="bg-white rounded-lg shadow-md p-6">
                   <div className="flex flex-col md:flex-row gap-6">
                     <img
-                      src={vehicle.image}
-                      alt={vehicle.name}
+                      src={tour.image}
+                      alt={tour.name}
                       className="w-full md:w-48 h-32 object-cover rounded-lg"
                     />
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900">{vehicle.name}</h3>
+                          <h3 className="text-xl font-bold text-gray-900">{tour.name}</h3>
                           <p className="text-sm text-gray-600">Booking ID: {booking.id}</p>
                         </div>
                         <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(booking.status)}`}>
@@ -268,7 +305,11 @@ export default function OwnerView({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600 mb-4">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4" />
-                          <span>{booking.startDate} to {booking.endDate}</span>
+                          <span>{booking.startDate} → {booking.endDate}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4" />
+                          <span>{booking.numPeople} traveler{booking.numPeople > 1 ? 's' : ''}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4" />
@@ -312,12 +353,13 @@ export default function OwnerView({
         </div>
       )}
 
-      {/* Add Vehicle Modal */}
+      </div>
+      {/* Add Tour Package Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 shadow-2xl">
             <div className="flex items-start justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Add New Vehicle</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Add New Tour Package</h2>
               <button
                 onClick={() => setShowAddModal(false)}
                 className="text-gray-500 hover:text-gray-700"
@@ -328,73 +370,101 @@ export default function OwnerView({
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Vehicle Name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tour Name *</label>
                 <input
                   type="text"
-                  value={newVehicle.name}
-                  onChange={(e) => setNewVehicle({ ...newVehicle, name: e.target.value })}
-                  placeholder="e.g., Mahindra Scorpio"
+                  value={newTour.name}
+                  onChange={(e) => setNewTour({ ...newTour, name: e.target.value })}
+                  placeholder="e.g., Annapurna Base Camp Trek"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Type *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tour Type *</label>
                   <select
-                    value={newVehicle.type}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, type: e.target.value as Vehicle['type'] })}
+                    value={newTour.type}
+                    onChange={(e) => setNewTour({ ...newTour, type: e.target.value as Tour['type'] })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="SUV">SUV</option>
-                    <option value="Sedan">Sedan</option>
-                    <option value="Hatchback">Hatchback</option>
-                    <option value="Motorbike">Motorbike</option>
-                    <option value="4x4 Offroad">4x4 Offroad</option>
+                    <option value="Adventure Trek">Adventure Trek</option>
+                    <option value="Cultural Tour">Cultural Tour</option>
+                    <option value="Wildlife Safari">Wildlife Safari</option>
+                    <option value="Mountain Expedition">Mountain Expedition</option>
+                    <option value="Pilgrimage">Pilgrimage</option>
+                    <option value="City Tour">City Tour</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Price per Day (NPR) *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Price per Person (NPR) *</label>
                   <input
                     type="number"
-                    value={newVehicle.pricePerDay || ''}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, pricePerDay: Number(e.target.value) })}
-                    placeholder="5000"
+                    value={newTour.pricePerPerson || ''}
+                    onChange={(e) => setNewTour({ ...newTour, pricePerPerson: Number(e.target.value) })}
+                    placeholder="25000"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Starting Location *</label>
                 <input
                   type="text"
-                  value={newVehicle.location}
-                  onChange={(e) => setNewVehicle({ ...newVehicle, location: e.target.value })}
+                  value={newTour.location}
+                  onChange={(e) => setNewTour({ ...newTour, location: e.target.value })}
                   placeholder="Kathmandu"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Plate Number *</label>
-                <input
-                  type="text"
-                  value={newVehicle.plateNumber}
-                  onChange={(e) => setNewVehicle({ ...newVehicle, plateNumber: e.target.value })}
-                  placeholder="BA 21 PA 1234"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Duration (Days) *</label>
+                  <input
+                    type="number"
+                    value={newTour.duration || ''}
+                    onChange={(e) => setNewTour({ ...newTour, duration: Number(e.target.value) })}
+                    placeholder="5"
+                    min="1"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Max Group Size</label>
+                  <input
+                    type="number"
+                    value={newTour.maxGroupSize || ''}
+                    onChange={(e) => setNewTour({ ...newTour, maxGroupSize: Number(e.target.value) })}
+                    placeholder="12"
+                    min="1"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+                  <select
+                    value={newTour.difficulty}
+                    onChange={(e) => setNewTour({ ...newTour, difficulty: e.target.value as Tour['difficulty'] })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="Easy">Easy</option>
+                    <option value="Moderate">Moderate</option>
+                    <option value="Challenging">Challenging</option>
+                    <option value="Extreme">Extreme</option>
+                  </select>
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Image URL</label>
                 <input
                   type="text"
-                  value={newVehicle.image}
-                  onChange={(e) => setNewVehicle({ ...newVehicle, image: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
+                  value={newTour.image}
+                  onChange={(e) => setNewTour({ ...newTour, image: e.target.value })}
+                  placeholder="https://example.com/tour-image.jpg"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -402,21 +472,21 @@ export default function OwnerView({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea
-                  value={newVehicle.description}
-                  onChange={(e) => setNewVehicle({ ...newVehicle, description: e.target.value })}
-                  placeholder="Describe your vehicle..."
+                  value={newTour.description}
+                  onChange={(e) => setNewTour({ ...newTour, description: e.target.value })}
+                  placeholder="Describe your tour package..."
                   rows={3}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Features (comma-separated)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Inclusions (comma-separated)</label>
                 <input
                   type="text"
-                  value={newVehicle.features}
-                  onChange={(e) => setNewVehicle({ ...newVehicle, features: e.target.value })}
-                  placeholder="AC, GPS, 4WD"
+                  value={newTour.features}
+                  onChange={(e) => setNewTour({ ...newTour, features: e.target.value })}
+                  placeholder="Expert Guide, Permits, Accommodation, Meals"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -429,10 +499,10 @@ export default function OwnerView({
                   Cancel
                 </button>
                 <button
-                  onClick={handleAddVehicle}
+                  onClick={handleAddTour}
                   className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                 >
-                  Add Vehicle
+                  Add Tour Package
                 </button>
               </div>
             </div>

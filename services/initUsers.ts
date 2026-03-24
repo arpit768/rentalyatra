@@ -23,14 +23,14 @@ export function initializeDefaultUsers() {
     {
       id: 'admin-1',
       name: 'Krishna Admin',
-      email: 'admin@yatrarentals.com',
+      email: 'admin@communitytours.com',
       role: UserRole.ADMIN,
       password: 'admin123',
     },
     {
       id: 'staff-1',
       name: 'Hari Thapa',
-      email: 'staff@yatrarentals.com',
+      email: 'staff@communitytours.com',
       role: UserRole.STAFF,
       password: 'staff123',
     },
@@ -38,8 +38,8 @@ export function initializeDefaultUsers() {
 
   localStorage.setItem('users', JSON.stringify(defaultUsers));
   console.log('✅ Default users initialized:');
-  console.log('Admin: admin@yatrarentals.com / admin123');
-  console.log('Staff: staff@yatrarentals.com / staff123');
+  console.log('Admin: admin@communitytours.com / admin123');
+  console.log('Staff: staff@communitytours.com / staff123');
 }
 
 // Check if we need to seed admin/staff accounts
@@ -55,7 +55,7 @@ export function ensureAdminStaffAccounts() {
     newUsers.push({
       id: 'admin-' + Date.now(),
       name: 'Krishna Admin',
-      email: 'admin@yatrarentals.com',
+      email: 'admin@communitytours.com',
       role: UserRole.ADMIN,
       password: 'admin123',
     });
@@ -65,7 +65,7 @@ export function ensureAdminStaffAccounts() {
     newUsers.push({
       id: 'staff-' + Date.now(),
       name: 'Hari Thapa',
-      email: 'staff@yatrarentals.com',
+      email: 'staff@communitytours.com',
       role: UserRole.STAFF,
       password: 'staff123',
     });
