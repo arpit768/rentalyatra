@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Mail, Lock, User as UserIcon, Compass, ArrowRight, Mountain, Shield, Star, Zap } from 'lucide-react';
 import { UserRole } from '../types';
 import type { User } from '../types';
+import * as api from '../services/api';
 
 interface AuthProps {
   onLogin: (user: User) => void;
@@ -48,47 +49,19 @@ export default function Auth({ onLogin }: AuthProps) {
 
     setIsLoading(true);
 
-    // Simulate loading
-    await new Promise(r => setTimeout(r, 400));
-
-    if (isLogin) {
-      const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = storedUsers.find(
-        (u: User & { password: string }) =>
-          u.email === formData.email && u.password === formData.password
-      );
-
-      if (user) {
-        const { password, ...userWithoutPassword } = user;
-        onLogin(userWithoutPassword);
+    try {
+      if (isLogin) {
+        const user = await api.login(formData.email, formData.password);
+        onLogin(user);
       } else {
-        setErrors({ email: 'Invalid email or password' });
+        const user = await api.signup(formData.name, formData.email, formData.password);
+        onLogin(user);
       }
-    } else {
-      const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-
-      if (storedUsers.some((u: User) => u.email === formData.email)) {
-        setErrors({ email: 'Email already registered' });
-        setIsLoading(false);
-        return;
-      }
-
-      const newUser: User & { password: string } = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: formData.name,
-        email: formData.email,
-        role: UserRole.CUSTOMER,
-        password: formData.password,
-      };
-
-      storedUsers.push(newUser);
-      localStorage.setItem('users', JSON.stringify(storedUsers));
-
-      const { password, ...userWithoutPassword } = newUser;
-      onLogin(userWithoutPassword);
+    } catch (err: any) {
+      setErrors({ email: err.message || 'Authentication failed' });
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLSelectElement>) => {
@@ -349,17 +322,15 @@ export default function Auth({ onLogin }: AuthProps) {
                   <button
                     key={account.email}
                     type="button"
-                    onClick={() => {
-                      const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-                      const user = storedUsers.find(
-                        (u: User & { password: string }) =>
-                          u.email === account.email && u.password === account.password
-                      );
-                      if (user) {
-                        const { password, ...userWithoutPassword } = user;
-                        onLogin(userWithoutPassword);
-                      } else {
-                        setErrors({ email: `${account.label} account not found. Refresh the page.` });
+                    onClick={async () => {
+                      setIsLoading(true);
+                      try {
+                        const user = await api.login(account.email, account.password);
+                        onLogin(user);
+                      } catch (err: any) {
+                        setErrors({ email: err.message || `${account.label} login failed` });
+                      } finally {
+                        setIsLoading(false);
                       }
                     }}
                     className="flex items-center gap-3 p-3 bg-white border-2 border-gray-100 rounded-xl hover:border-gray-200 hover:shadow-md transition-all text-left group"

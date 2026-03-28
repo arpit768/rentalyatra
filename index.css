@@ -67,6 +67,7 @@
 }
 
 html {
+  -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 }
 
@@ -204,6 +205,7 @@ a:hover {
   border-top-color: var(--primary);
   width: 40px;
   height: 40px;
+  -webkit-animation: spin 0.8s linear infinite;
   animation: spin 0.8s linear infinite;
 }
 
@@ -213,6 +215,7 @@ a:hover {
 
 /* Fade In Animation */
 .fade-in {
+  -webkit-animation: fadeIn 0.3s ease-in;
   animation: fadeIn 0.3s ease-in;
 }
 
@@ -223,6 +226,7 @@ a:hover {
 
 /* Slide In Animation */
 .slide-in {
+  -webkit-animation: slideIn 0.3s ease-out;
   animation: slideIn 0.3s ease-out;
 }
 
@@ -233,6 +237,7 @@ a:hover {
 
 /* Slide Down Animation */
 .animate-slideDown {
+  -webkit-animation: slideDown 0.3s ease-out;
   animation: slideDown 0.3s ease-out;
 }
 
@@ -249,6 +254,7 @@ a:hover {
 
 /* Slide In Right Animation */
 .animate-slideInRight {
+  -webkit-animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -265,6 +271,7 @@ a:hover {
 
 /* Scale In Animation */
 .animate-scaleIn {
+  -webkit-animation: scaleIn 0.3s ease-out;
   animation: scaleIn 0.3s ease-out;
 }
 
@@ -281,6 +288,7 @@ a:hover {
 
 /* Bounce Animation */
 .animate-bounce-subtle {
+  -webkit-animation: bounceSubtle 1s ease-in-out infinite;
   animation: bounceSubtle 1s ease-in-out infinite;
 }
 
@@ -295,6 +303,7 @@ a:hover {
 
 /* Pulse Animation */
 .animate-pulse-slow {
+  -webkit-animation: pulseSlow 2s ease-in-out infinite;
   animation: pulseSlow 2s ease-in-out infinite;
 }
 
@@ -408,6 +417,7 @@ a:hover {
   padding: 1rem 1.5rem;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-xl);
+  -webkit-animation: slideInRight 0.3s ease-out;
   animation: slideInRight 0.3s ease-out;
   z-index: 9999;
 }
@@ -435,12 +445,18 @@ a:hover {
 /* Modal Backdrop */
 .modal-backdrop {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
+  -webkit-box-align: center;
   align-items: center;
+  -webkit-box-pack: center;
   justify-content: center;
   z-index: 1000;
+  -webkit-animation: fadeIn 0.2s ease;
   animation: fadeIn 0.2s ease;
 }
 
@@ -451,6 +467,8 @@ a:hover {
   max-width: 90%;
   max-height: 90vh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  -webkit-animation: slideInScale 0.3s ease-out;
   animation: slideInScale 0.3s ease-out;
 }
 
@@ -490,4 +508,23 @@ a:hover {
   height: 80px;
   margin: 0 auto 1rem;
   opacity: 0.5;
+}
+
+/* ─── Safari / WebKit Compatibility ─────────────────────────────────────────── */
+
+/* Ensure backdrop-filter works in Safari (Tailwind CDN handles its own,
+   but inline and custom styles may not include the -webkit- prefix). */
+@supports (-webkit-backdrop-filter: blur(1px)) {
+  .backdrop-blur-sm,
+  .backdrop-blur-xl,
+  [class*="backdrop-blur"] {
+    -webkit-backdrop-filter: var(--tw-backdrop-blur, blur(4px));
+  }
+}
+
+/* Safari fix: ensure smooth scrolling containers work with momentum */
+.overflow-y-auto,
+.overflow-x-auto,
+[class*="overflow-"] {
+  -webkit-overflow-scrolling: touch;
 }

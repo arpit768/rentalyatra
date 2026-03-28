@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from './components/Navbar';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
@@ -12,39 +12,69 @@ import HelpCenterPage from './components/HelpCenterPage';
 import EmergencySupportPage from './components/EmergencySupportPage';
 import ContactUsPage from './components/ContactUsPage';
 import { User, UserRole, Tour, Booking, AppNotification } from './types';
-import { MOCK_TOURS, MOCK_BOOKINGS } from './constants';
-import { ensureAdminStaffAccounts } from './services/initUsers';
+import * as api from './services/api';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState('home');
   const [showLogin, setShowLogin] = useState(false);
+  const [tours, setTours] = useState<Tour[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [appLoading, setAppLoading] = useState(true);
 
-  // Initialize default admin/staff accounts on first load
-  useEffect(() => {
-    ensureAdminStaffAccounts();
+  const fetchTours = useCallback(async () => {
+    try {
+      const data = await api.getTours();
+      setTours(data);
+    } catch (err) {
+      console.error('Failed to fetch tours:', err);
+    }
   }, []);
 
-  // Simulating Backend Database State
-  const [tours, setTours] = useState<Tour[]>(MOCK_TOURS);
-  const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const fetchBookings = useCallback(async () => {
+    try {
+      const data = await api.getBookings();
+      setBookings(data);
+    } catch (err) {
+      console.error('Failed to fetch bookings:', err);
+    }
+  }, []);
 
-  const handleAddNotification = (notification: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => {
-    const newNotification: AppNotification = {
-      ...notification,
-      id: Math.random().toString(36).substr(2, 9),
-      timestamp: new Date().toISOString(),
-      read: false,
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const data = await api.getNotifications();
+      setNotifications(data);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    }
+  }, []);
+
+  // On mount: fetch public tours for landing page and restore session if token exists
+  useEffect(() => {
+    const init = async () => {
+      await fetchTours();
+      const token = api.getToken();
+      if (token) {
+        try {
+          const currentUser = await api.getMe();
+          setUser(currentUser);
+          setCurrentView('dashboard');
+        } catch {
+          api.clearToken();
+        }
+      }
+      setAppLoading(false);
     };
-    setNotifications(prev => [newNotification, ...prev]);
-  };
+    init();
+  }, []);
 
-  const handleMarkNotificationsRead = (role: UserRole) => {
-    setNotifications(prev =>
-      prev.map(n => (n.forRole === role || n.forRole === 'ALL') ? { ...n, read: true } : n)
-    );
-  };
+  // When user logs in, load their bookings and notifications
+  useEffect(() => {
+    if (!user) return;
+    fetchBookings();
+    fetchNotifications();
+  }, [user]);
 
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
@@ -52,41 +82,83 @@ const App: React.FC = () => {
     setShowLogin(false);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await api.logout();
     setUser(null);
+    setBookings([]);
+    setNotifications([]);
     setCurrentView('home');
     setShowLogin(false);
   };
 
-  const handleCreateBooking = (booking: Omit<Booking, 'id'>) => {
-    const newBooking = {
-      ...booking,
-      id: Math.random().toString(36).substr(2, 9),
-    };
-    setBookings(prev => [newBooking, ...prev]);
-    alert("Booking request sent successfully!");
+  const handleMarkNotificationsRead = async (_role: UserRole) => {
+    try {
+      await api.markNotificationsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (err) {
+      console.error('Failed to mark notifications read:', err);
+    }
   };
 
-  const handleAddTour = (tour: Omit<Tour, 'id'>) => {
-    const newTour = {
-      ...tour,
-      id: Math.random().toString(36).substr(2, 9),
-    };
-    setTours(prev => [...prev, newTour]);
-    alert("Tour package listed successfully!");
+  const handleCreateBooking = async (bookingData: Omit<Booking, 'id'>) => {
+    try {
+      // customerId and status are set by the server
+      const { customerId: _c, status: _s, ...rest } = bookingData;
+      const newBooking = await api.createBooking(rest);
+      setBookings(prev => [newBooking, ...prev]);
+      await fetchNotifications();
+      alert('Booking request sent successfully!');
+    } catch (err: any) {
+      alert(err.message || 'Failed to create booking');
+    }
   };
 
-  const handleUpdateBookingStatus = (bookingId: string, status: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED') => {
-    setBookings(prev => prev.map(b =>
-      b.id === bookingId ? { ...b, status } : b
-    ));
+  const handleAddTour = async (tourData: Omit<Tour, 'id'>) => {
+    try {
+      // createdBy is set by the server from the JWT token
+      const { createdBy: _cb, ...rest } = tourData;
+      const newTour = await api.createTour(rest);
+      setTours(prev => [...prev, newTour]);
+      await fetchNotifications();
+      alert('Tour package listed successfully!');
+    } catch (err: any) {
+      alert(err.message || 'Failed to create tour');
+    }
   };
 
-  const handleUpdateTour = (id: string, updates: Partial<Tour>) => {
-    setTours(prev => prev.map(t =>
-        t.id === id ? { ...t, ...updates } : t
-    ));
+  const handleUpdateBookingStatus = async (
+    bookingId: string,
+    status: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
+  ) => {
+    try {
+      const updated = await api.updateBookingStatus(bookingId, status);
+      setBookings(prev => prev.map(b => b.id === bookingId ? updated : b));
+      await fetchNotifications();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update booking status');
+    }
   };
+
+  const handleUpdateTour = async (id: string, updates: Partial<Tour>) => {
+    try {
+      const updated = await api.updateTour(id, updates);
+      setTours(prev => prev.map(t => t.id === id ? updated : t));
+      await fetchNotifications();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update tour');
+    }
+  };
+
+  if (appLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderContent = () => {
     if (!user) {
@@ -96,7 +168,6 @@ const App: React.FC = () => {
       return <LandingPage onGetStarted={() => setShowLogin(true)} tours={tours} />;
     }
 
-    // Authenticated Views
     return (
       <div className="min-h-screen bg-gray-50 font-sans">
         <Navbar
@@ -130,7 +201,7 @@ const App: React.FC = () => {
               onUpdateBookingStatus={handleUpdateBookingStatus}
               onUpdateTour={handleUpdateTour}
               onAddTour={handleAddTour}
-              onAddNotification={handleAddNotification}
+              onAddNotification={() => {}}
             />
           )}
 
